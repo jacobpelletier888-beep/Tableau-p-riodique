@@ -118,6 +118,7 @@
   .content{padding:20px;}
 
   /* ---------- Tableau périodique ---------- */
+  .pt-filter{margin-bottom:16px;}
   .legend{
     display:flex;
     flex-wrap:wrap;
@@ -161,6 +162,8 @@
     overflow:hidden;
   }
   .cell:hover{transform:scale(1.12);z-index:5;box-shadow:0 6px 16px rgba(0,0,0,.35);}
+  /* Case filtrée : invisible mais garde EXACTEMENT sa place (le tableau ne bouge pas) */
+  .cell.dim{visibility:hidden;}
   .cell .num{position:absolute;top:2px;left:4px;font-size:9px;opacity:.75;}
   .cell .sym{font-size:clamp(11px,1.6vw,17px);font-weight:700;line-height:1;}
   .cell .mass{font-size:8px;opacity:.7;margin-top:1px;}
@@ -349,6 +352,13 @@
     <h2>Tableau périodique</h2>
   </div>
   <div class="content">
+    <div class="pt-filter">
+      <div class="filter-mode" id="pt-mode">
+        <button data-mode="sym" class="active">Filtrer par symbole</button>
+        <button data-mode="name">Filtrer par nom</button>
+      </div>
+      <div class="letter-bar" id="pt-letter-bar"></div>
+    </div>
     <div class="legend" id="legend"></div>
     <div class="table-scroll">
       <div class="ptable" id="ptable"></div>
@@ -511,6 +521,65 @@ const ELEMENTS = [
   [118,'Og','Oganesson',294,'ng',18,7]
 ];
 
+/* Accès rapide à un élément par son numéro atomique */
+const ELEM_BY_Z = {};
+ELEMENTS.forEach(e => ELEM_BY_Z[e[0]] = e);
+
+/* -------- Filtre du tableau périodique -------- */
+/* Pas de barre de recherche : on filtre par 1re lettre du symbole ou du nom.  */
+/* Les cases non retenues deviennent invisibles mais gardent leur position :   */
+/* l'affichage du tableau ne bouge jamais.                                     */
+let ptState = { mode:'sym', letter:null };
+
+/* Première lettre d'un élément selon le mode (symbole ou nom, sans accent) */
+function ptLetter(e){
+  return (ptState.mode==='sym' ? e[1] : norm(e[2])).charAt(0).toUpperCase();
+}
+
+/* Construit la barre de lettres selon le mode actif */
+function buildPtLetterBar(){
+  const bar = document.getElementById('pt-letter-bar');
+  const letters = [...new Set(ELEMENTS.map(ptLetter))].sort();
+  let html = '<button class="'+(ptState.letter===null?'active':'')+'" data-letter="">Tous</button>';
+  letters.forEach(L=>{
+    html += '<button class="'+(ptState.letter===L?'active':'')+'" data-letter="'+L+'">'+L+'</button>';
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const L = b.getAttribute('data-letter');
+      ptState.letter = (L==='' ? null : L);
+      buildPtLetterBar();
+      applyPtFilter();
+    });
+  });
+}
+
+/* Masque/affiche les cases sans jamais changer la disposition du tableau */
+function applyPtFilter(){
+  document.querySelectorAll('#ptable .cell:not(.ph)').forEach(cell=>{
+    if(ptState.letter===null){ cell.classList.remove('dim'); return; }
+    const e = ELEM_BY_Z[+cell.dataset.z];
+    cell.classList.toggle('dim', ptLetter(e)!==ptState.letter);
+  });
+}
+
+/* Branche les deux modes de filtre (par symbole / par nom) */
+function initPtFilter(){
+  buildPtLetterBar();
+  applyPtFilter();
+  document.querySelectorAll('#pt-mode button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#pt-mode button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      ptState.mode = b.getAttribute('data-mode');
+      ptState.letter = null; /* on repart de « Tous » quand on change de mode */
+      buildPtLetterBar();
+      applyPtFilter();
+    });
+  });
+}
+
 /* -------- Construction du tableau périodique -------- */
 function buildPeriodic(){
   const grid = document.getElementById('ptable');
@@ -547,6 +616,7 @@ function makeCell(e){
   const [z,sym,name,mass,cat,col,row] = e;
   const cell = document.createElement('div');
   cell.className='cell c-'+cat;
+  cell.dataset.z = z;
   cell.style.gridColumn=col;
   cell.style.gridRow=row;
   cell.innerHTML =
@@ -721,6 +791,7 @@ function initIons(){
 /* -------- Init -------- */
 buildPeriodic();
 buildLegend();
+initPtFilter();
 initIons();
 </script>
 </body>
