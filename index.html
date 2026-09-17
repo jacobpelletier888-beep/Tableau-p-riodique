@@ -218,33 +218,70 @@
   .modal-rows span:first-child{color:var(--muted);}
 
   /* ---------- Ions polyatomiques ---------- */
-  .ions-wrap{max-width:1000px;margin:0 auto;}
-  .ions-intro{color:#cbd5e1;text-align:center;margin:0 auto 22px;max-width:640px;font-size:15px;}
-  .ion-group{margin-bottom:26px;}
-  .ion-group h3{
-    color:#fff;font-size:18px;margin:0 0 12px;
-    display:flex;align-items:center;gap:10px;
+  .ions-wrap{max-width:1050px;margin:0 auto;}
+  .ions-intro{color:#cbd5e1;text-align:center;margin:0 auto 18px;max-width:640px;font-size:15px;}
+
+  .ion-controls{margin-bottom:14px;}
+  .search-box{position:relative;max-width:480px;margin:0 auto 14px;}
+  .search-box input{
+    width:100%;
+    padding:13px 42px 13px 42px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.96);
+    font-size:15px;color:var(--ink);
+    outline:none;box-shadow:var(--shadow);
   }
-  .ion-group h3 .pill{
-    font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;color:#0f172a;
+  .search-box input:focus{border-color:var(--accent);}
+  .search-box .ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.5;}
+  .search-box .clear{
+    position:absolute;right:12px;top:50%;transform:translateY(-50%);
+    border:none;background:#e2e8f0;color:#334155;border-radius:50%;
+    width:24px;height:24px;cursor:pointer;font-size:12px;display:none;line-height:1;
   }
-  .pill-pos{background:#fca5a5;}
-  .pill-neg1{background:#67e8f9;}
-  .pill-neg2{background:#6ee7b7;}
-  .pill-neg3{background:#fde68a;}
+  .search-box .clear.show{display:block;}
+
+  .filter-mode{display:flex;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .filter-mode button{
+    border:1px solid rgba(255,255,255,.2);
+    background:rgba(255,255,255,.08);
+    color:#e2e8f0;padding:7px 16px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;
+    transition:background .12s ease,border-color .12s ease;
+  }
+  .filter-mode button.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .letter-bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+  .letter-bar button{
+    min-width:34px;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06);
+    color:#cbd5e1;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;
+    transition:background .12s ease,color .12s ease,border-color .12s ease;
+  }
+  .letter-bar button:hover{background:rgba(255,255,255,.16);}
+  .letter-bar button.active{background:#fff;color:var(--ink);border-color:#fff;}
+
+  .ion-count{text-align:center;color:#94a3b8;font-size:13px;margin:16px 0 12px;}
 
   .ion-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
     gap:12px;
   }
   .ion-card{
     background:#fff;border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);
   }
-  .ion-card .formula{font-size:20px;font-weight:700;color:var(--ink);}
+  .ion-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .ion-card .formula{font-size:20px;font-weight:700;color:var(--ink);line-height:1.2;}
   .ion-card .formula sub{font-size:12px;}
   .ion-card .formula sup{font-size:12px;color:var(--accent2);}
-  .ion-card .ion-name{color:var(--muted);font-size:14px;margin-top:3px;}
+  .ion-card .ion-name{color:var(--muted);font-size:14px;margin-top:4px;}
+  .charge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;color:#0f172a;}
+  .charge-pos{background:#fca5a5;}
+  .charge-neg{background:#7dd3fc;}
+
+  .ion-empty{text-align:center;color:#94a3b8;font-size:15px;padding:30px 10px;display:none;}
+  .ion-empty.show{display:block;}
 
   footer{text-align:center;color:#64748b;font-size:12px;padding:24px;}
 </style>
@@ -281,8 +318,22 @@
   </div>
   <div class="content">
     <div class="ions-wrap">
-      <p class="ions-intro">Les ions polyatomiques sont des groupes d'atomes qui portent une charge globale. Voici les plus courants, regroupés selon leur charge.</p>
-      <div id="ions-content"></div>
+      <p class="ions-intro">Recherche un ion par son nom ou son symbole, ou filtre par première lettre.</p>
+      <div class="ion-controls">
+        <div class="search-box">
+          <span class="ico">🔍</span>
+          <input id="ion-search" type="text" placeholder="Rechercher : nom ou symbole…" autocomplete="off">
+          <button class="clear" id="ion-clear" aria-label="Effacer la recherche">✕</button>
+        </div>
+        <div class="filter-mode">
+          <button data-mode="sym" class="active">Filtrer par symbole</button>
+          <button data-mode="name">Filtrer par nom</button>
+        </div>
+        <div class="letter-bar" id="letter-bar"></div>
+      </div>
+      <div class="ion-count" id="ion-count"></div>
+      <div class="ion-grid" id="ions-content"></div>
+      <p class="ion-empty" id="ion-empty">Aucun ion ne correspond à ta recherche.</p>
     </div>
   </div>
 </section>
@@ -543,58 +594,132 @@ function closeModal(){document.getElementById('modal').classList.remove('open');
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeModal();});
 
 /* -------- Ions polyatomiques -------- */
+/* f = formule (HTML), sym = symbole en texte simple (recherche/filtre), n = nom, c = charge */
 const IONS = [
-  {titre:'Cations (charge +)', pill:'pill-pos', label:'1 +', ions:[
-    {f:'NH<sub>4</sub><sup>+</sup>', n:'Ammonium'},
-    {f:'H<sub>3</sub>O<sup>+</sup>', n:'Hydronium'}
-  ]},
-  {titre:'Anions à charge 1−', pill:'pill-neg1', label:'1 −', ions:[
-    {f:'OH<sup>−</sup>', n:'Hydroxyde'},
-    {f:'NO<sub>3</sub><sup>−</sup>', n:'Nitrate'},
-    {f:'NO<sub>2</sub><sup>−</sup>', n:'Nitrite'},
-    {f:'HCO<sub>3</sub><sup>−</sup>', n:'Hydrogénocarbonate (bicarbonate)'},
-    {f:'CH<sub>3</sub>COO<sup>−</sup>', n:'Acétate'},
-    {f:'MnO<sub>4</sub><sup>−</sup>', n:'Permanganate'},
-    {f:'CN<sup>−</sup>', n:'Cyanure'},
-    {f:'ClO<sup>−</sup>', n:'Hypochlorite'},
-    {f:'ClO<sub>2</sub><sup>−</sup>', n:'Chlorite'},
-    {f:'ClO<sub>3</sub><sup>−</sup>', n:'Chlorate'},
-    {f:'ClO<sub>4</sub><sup>−</sup>', n:'Perchlorate'}
-  ]},
-  {titre:'Anions à charge 2−', pill:'pill-neg2', label:'2 −', ions:[
-    {f:'CO<sub>3</sub><sup>2−</sup>', n:'Carbonate'},
-    {f:'SO<sub>4</sub><sup>2−</sup>', n:'Sulfate'},
-    {f:'SO<sub>3</sub><sup>2−</sup>', n:'Sulfite'},
-    {f:'CrO<sub>4</sub><sup>2−</sup>', n:'Chromate'},
-    {f:'Cr<sub>2</sub>O<sub>7</sub><sup>2−</sup>', n:'Dichromate'},
-    {f:'S<sub>2</sub>O<sub>3</sub><sup>2−</sup>', n:'Thiosulfate'}
-  ]},
-  {titre:'Anions à charge 3−', pill:'pill-neg3', label:'3 −', ions:[
-    {f:'PO<sub>4</sub><sup>3−</sup>', n:'Phosphate'},
-    {f:'PO<sub>3</sub><sup>3−</sup>', n:'Phosphite'}
-  ]}
+  {f:'AsO<sub>3</sub><sup>3−</sup>', sym:'AsO3', n:'Arsénite', c:'3−'},
+  {f:'AsO<sub>4</sub><sup>3−</sup>', sym:'AsO4', n:'Arsénate', c:'3−'},
+  {f:'BO<sub>3</sub><sup>3−</sup>', sym:'BO3', n:'Borate', c:'3−'},
+  {f:'BrO<sup>−</sup>', sym:'BrO', n:'Hypobromite', c:'1−'},
+  {f:'BrO<sub>2</sub><sup>−</sup>', sym:'BrO2', n:'Bromite', c:'1−'},
+  {f:'BrO<sub>3</sub><sup>−</sup>', sym:'BrO3', n:'Bromate', c:'1−'},
+  {f:'BrO<sub>4</sub><sup>−</sup>', sym:'BrO4', n:'Perbromate', c:'1−'},
+  {f:'CN<sup>−</sup>', sym:'CN', n:'Cyanure', c:'1−'},
+  {f:'CO<sub>3</sub><sup>2−</sup>', sym:'CO3', n:'Carbonate', c:'2−'},
+  {f:'C<sub>2</sub>O<sub>4</sub><sup>2−</sup>', sym:'C2O4', n:'Oxalate', c:'2−'},
+  {f:'CH<sub>3</sub>COO<sup>−</sup>', sym:'CH3COO', n:'Acétate', c:'1−'},
+  {f:'ClO<sup>−</sup>', sym:'ClO', n:'Hypochlorite', c:'1−'},
+  {f:'ClO<sub>2</sub><sup>−</sup>', sym:'ClO2', n:'Chlorite', c:'1−'},
+  {f:'ClO<sub>3</sub><sup>−</sup>', sym:'ClO3', n:'Chlorate', c:'1−'},
+  {f:'ClO<sub>4</sub><sup>−</sup>', sym:'ClO4', n:'Perchlorate', c:'1−'},
+  {f:'CrO<sub>4</sub><sup>2−</sup>', sym:'CrO4', n:'Chromate', c:'2−'},
+  {f:'Cr<sub>2</sub>O<sub>7</sub><sup>2−</sup>', sym:'Cr2O7', n:'Dichromate', c:'2−'},
+  {f:'HCO<sub>3</sub><sup>−</sup>', sym:'HCO3', n:'Hydrogénocarbonate', c:'1−'},
+  {f:'HS<sup>−</sup>', sym:'HS', n:'Hydrogénosulfure', c:'1−'},
+  {f:'HSO<sub>4</sub><sup>−</sup>', sym:'HSO4', n:'Hydrogénosulfate', c:'1−'},
+  {f:'HPO<sub>4</sub><sup>2−</sup>', sym:'HPO4', n:'Hydrogénophosphate', c:'2−'},
+  {f:'H<sub>2</sub>PO<sub>4</sub><sup>−</sup>', sym:'H2PO4', n:'Dihydrogénophosphate', c:'1−'},
+  {f:'IO<sup>−</sup>', sym:'IO', n:'Hypoiodite', c:'1−'},
+  {f:'IO<sub>3</sub><sup>−</sup>', sym:'IO3', n:'Iodate', c:'1−'},
+  {f:'IO<sub>4</sub><sup>−</sup>', sym:'IO4', n:'Periodate', c:'1−'},
+  {f:'MnO<sub>4</sub><sup>−</sup>', sym:'MnO4', n:'Permanganate', c:'1−'},
+  {f:'NH<sub>4</sub><sup>+</sup>', sym:'NH4', n:'Ammonium', c:'1+'},
+  {f:'NO<sub>3</sub><sup>−</sup>', sym:'NO3', n:'Nitrate', c:'1−'},
+  {f:'NO<sub>2</sub><sup>−</sup>', sym:'NO2', n:'Nitrite', c:'1−'},
+  {f:'OH<sup>−</sup>', sym:'OH', n:'Hydroxyde', c:'1−'},
+  {f:'O<sub>2</sub><sup>2−</sup>', sym:'O2', n:'Peroxyde', c:'2−'},
+  {f:'PO<sub>3</sub><sup>3−</sup>', sym:'PO3', n:'Phosphite', c:'3−'},
+  {f:'PO<sub>4</sub><sup>3−</sup>', sym:'PO4', n:'Phosphate', c:'3−'},
+  {f:'P<sub>2</sub>O<sub>6</sub><sup>4−</sup>', sym:'P2O6', n:'Hypophosphate', c:'4−'},
+  {f:'SO<sub>3</sub><sup>2−</sup>', sym:'SO3', n:'Sulfite', c:'2−'},
+  {f:'SO<sub>4</sub><sup>2−</sup>', sym:'SO4', n:'Sulfate', c:'2−'},
+  {f:'S<sub>2</sub>O<sub>3</sub><sup>2−</sup>', sym:'S2O3', n:'Thiosulfate', c:'2−'},
+  {f:'SiO<sub>3</sub><sup>2−</sup>', sym:'SiO3', n:'Silicate', c:'2−'},
+  {f:'SeO<sub>3</sub><sup>2−</sup>', sym:'SeO3', n:'Sélénite', c:'2−'},
+  {f:'SeO<sub>4</sub><sup>2−</sup>', sym:'SeO4', n:'Séléniate', c:'2−'},
+  {f:'TeO<sub>3</sub><sup>2−</sup>', sym:'TeO3', n:'Tellurite', c:'2−'},
+  {f:'TeO<sub>4</sub><sup>2−</sup>', sym:'TeO4', n:'Tellurate', c:'2−'}
 ];
 
-function buildIons(){
-  const wrap = document.getElementById('ions-content');
-  IONS.forEach(g=>{
-    const section = document.createElement('div');
-    section.className='ion-group';
-    let cards = '';
-    g.ions.forEach(i=>{
-      cards += '<div class="ion-card"><div class="formula">'+i.f+'</div><div class="ion-name">'+i.n+'</div></div>';
+/* État courant des filtres */
+let ionState = { q:'', mode:'sym', letter:null };
+
+/* Enlève les accents et met en minuscules pour une recherche souple */
+function norm(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); }
+
+/* Première lettre selon le mode choisi (symbole ou nom) */
+function firstLetter(ion){
+  return (ionState.mode==='sym' ? ion.sym : norm(ion.n)).charAt(0).toUpperCase();
+}
+
+/* Construit la barre de lettres (A, B, C…) selon le mode actif */
+function buildLetterBar(){
+  const bar = document.getElementById('letter-bar');
+  const letters = [...new Set(IONS.map(firstLetter))].sort();
+  let html = '<button class="'+(ionState.letter===null?'active':'')+'" data-letter="">Tous</button>';
+  letters.forEach(L=>{
+    html += '<button class="'+(ionState.letter===L?'active':'')+'" data-letter="'+L+'">'+L+'</button>';
+  });
+  bar.innerHTML = html;
+  bar.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const L = b.getAttribute('data-letter');
+      ionState.letter = (L==='' ? null : L);
+      buildLetterBar();
+      renderIons();
     });
-    section.innerHTML =
-      '<h3>'+g.titre+' <span class="pill '+g.pill+'">'+g.label+'</span></h3>'+
-      '<div class="ion-grid">'+cards+'</div>';
-    wrap.appendChild(section);
+  });
+}
+
+/* Affiche les cartes selon la recherche + la lettre sélectionnée */
+function renderIons(){
+  const wrap = document.getElementById('ions-content');
+  const q = norm(ionState.q.trim());
+  const list = IONS.filter(ion=>{
+    const okLetter = (ionState.letter===null) || (firstLetter(ion)===ionState.letter);
+    const okSearch = (q==='') || norm(ion.n).includes(q) || norm(ion.sym).includes(q);
+    return okLetter && okSearch;
+  });
+  wrap.innerHTML = list.map(ion=>{
+    const cls = ion.c.includes('+') ? 'charge-pos' : 'charge-neg';
+    return '<div class="ion-card"><div class="ion-top"><span class="formula">'+ion.f+
+      '</span><span class="charge '+cls+'">'+ion.c+'</span></div>'+
+      '<div class="ion-name">'+ion.n+'</div></div>';
+  }).join('');
+  document.getElementById('ion-empty').classList.toggle('show', list.length===0);
+  document.getElementById('ion-count').textContent =
+    list.length + (list.length>1?' ions affichés':' ion affiché') + ' sur ' + IONS.length;
+}
+
+/* Branche la recherche, le bouton d'effacement et les modes de filtre */
+function initIons(){
+  buildLetterBar();
+  renderIons();
+  const search = document.getElementById('ion-search');
+  const clear = document.getElementById('ion-clear');
+  search.addEventListener('input',()=>{
+    ionState.q = search.value;
+    clear.classList.toggle('show', search.value.length>0);
+    renderIons();
+  });
+  clear.addEventListener('click',()=>{
+    search.value=''; ionState.q=''; clear.classList.remove('show'); renderIons(); search.focus();
+  });
+  document.querySelectorAll('.filter-mode button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.filter-mode button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      ionState.mode = b.getAttribute('data-mode');
+      ionState.letter = null; /* on repart de « Tous » quand on change de mode */
+      buildLetterBar();
+      renderIons();
+    });
   });
 }
 
 /* -------- Init -------- */
 buildPeriodic();
 buildLegend();
-buildIons();
+initIons();
 </script>
 </body>
 </html>
